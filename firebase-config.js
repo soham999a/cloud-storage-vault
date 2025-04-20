@@ -27,14 +27,24 @@ if (firebaseConfig.appId.includes('3f3f3f3f')) {
   console.log('Using generated appId:', firebaseConfig.appId);
 }
 
+// Check if we're on Vercel and log it
+const isVercelDeployment = window.location.hostname.includes('vercel.app');
+console.log('Running on Vercel deployment:', isVercelDeployment);
+
 // Log Firebase config for debugging
 console.log('Firebase config loaded:', {
   apiKey: firebaseConfig.apiKey,
   authDomain: firebaseConfig.authDomain,
   projectId: firebaseConfig.projectId,
   // Don't log sensitive values
-  appId: '...' + firebaseConfig.appId.slice(-6)
+  appId: '...' + firebaseConfig.appId.slice(-6),
+  currentDomain: window.location.hostname
 });
+
+// Log important information for Vercel deployments
+if (isVercelDeployment) {
+  console.log('IMPORTANT: Make sure to add ' + window.location.origin + ' to Firebase authorized domains');
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
