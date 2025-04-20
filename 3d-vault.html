@@ -61,6 +61,18 @@
 
     <!-- Redirect Handler -->
     <script src="redirect-handler.js"></script>
+
+    <!-- Vercel-specific Auth (only loads on Vercel) -->
+    <script>
+        // Check if we're on Vercel
+        if (window.location.hostname.includes('vercel.app')) {
+            console.log('Loading Vercel-specific authentication...');
+            const vercelAuthScript = document.createElement('script');
+            vercelAuthScript.type = 'module';
+            vercelAuthScript.src = 'vercel-auth.js';
+            document.head.appendChild(vercelAuthScript);
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -3470,11 +3482,22 @@
             // Sign in with Google
             console.log('Initiating Google sign-in from login button');
 
-            // For Vercel deployments, show a message about redirect
-            if (isVercel) {
+            // For Vercel deployments, use Vercel-specific auth
+            if (isVercel && window.vercelAuth) {
+                console.log('Using Vercel-specific authentication');
+                showNotification('info', 'Redirecting to Google sign-in...', 2000);
+                window.vercelAuth.signInWithGoogle()
+                    .catch(error => {
+                        console.error('Vercel Auth Error:', error);
+                        showNotification('error', 'Sign-in failed: ' + error.message, 5000);
+                    });
+                return; // Exit early as we're handling auth differently
+            } else if (isVercel) {
+                console.warn('Vercel Auth not loaded yet, falling back to standard auth');
                 showNotification('info', 'Redirecting to Google sign-in...', 2000);
             }
 
+            // Standard Firebase auth for non-Vercel environments
             window.firebaseServices.signInWithGoogle()
                 .then((result) => {
                     // If result is null, we're using redirect method and page will reload
@@ -3573,11 +3596,22 @@
             // Sign in with Google (same process as login, but with different analytics event)
             console.log('Initiating Google sign-in from register button');
 
-            // For Vercel deployments, show a message about redirect
-            if (isVercel) {
+            // For Vercel deployments, use Vercel-specific auth
+            if (isVercel && window.vercelAuth) {
+                console.log('Using Vercel-specific authentication for registration');
+                showNotification('info', 'Redirecting to Google sign-in...', 2000);
+                window.vercelAuth.signInWithGoogle()
+                    .catch(error => {
+                        console.error('Vercel Auth Error:', error);
+                        showNotification('error', 'Sign-up failed: ' + error.message, 5000);
+                    });
+                return; // Exit early as we're handling auth differently
+            } else if (isVercel) {
+                console.warn('Vercel Auth not loaded yet, falling back to standard auth');
                 showNotification('info', 'Redirecting to Google sign-in...', 2000);
             }
 
+            // Standard Firebase auth for non-Vercel environments
             window.firebaseServices.signInWithGoogle()
                 .then((result) => {
                     // If result is null, we're using redirect method and page will reload
