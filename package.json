@@ -5,9 +5,9 @@
   "main": "3d-vault.html",
   "scripts": {
     "start": "serve",
-    "build": "echo 'No build step required'",
-    "dev": "cd frontend && npm run dev",
-    "preview": "cd frontend && npm run preview"
+    "build": "echo 'Static site, no build step needed'",
+    "dev": "serve",
+    "preview": "serve"
   },
   "repository": {
     "type": "git",

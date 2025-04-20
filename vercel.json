@@ -1,29 +1,5 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/",
-      "dest": "/3d-vault.html"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "framework": null,
+  "outputDirectory": ".",
+  "buildCommand": "echo 'No build step needed'"
 }
