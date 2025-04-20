@@ -7,13 +7,13 @@ import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/9.22.
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCMx6WZxiJcmQ7e1lqJlenSqt9Ry3Iiphg",
-  authDomain: "cloud0storage-vault.firebaseapp.com",
-  projectId: "cloud0storage-vault",
-  storageBucket: "cloud0storage-vault.appspot.com",
-  messagingSenderId: "145631142887",
-  appId: "1:145631142887:web:5b1746c38de4a142391342",
-  measurementId: "G-J4653VGJQX"
+  apiKey: "AIzaSyDQnxJpj0rlnKSeAKV5Qxj8YnxvTNmGQyY",
+  authDomain: "cloud-storage-vault-c9e0c.firebaseapp.com",
+  projectId: "cloud-storage-vault-c9e0c",
+  storageBucket: "cloud-storage-vault-c9e0c.appspot.com",
+  messagingSenderId: "1098024457778",
+  appId: "1:1098024457778:web:0a5e5a2e0b4e3f3f3f3f3f",
+  measurementId: "G-KEJ7VKNTZP"
 };
 
 // Initialize Firebase
