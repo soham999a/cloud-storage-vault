@@ -8,14 +8,13 @@ import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/9.22.
 // Your web app's Firebase configuration
 // Get Firebase config from environment variables if available, otherwise use hardcoded values
 const firebaseConfig = {
-  apiKey: "AIzaSyDQnxJpj0rlnKSeAKV5Qxj8YnxvTNmGQyY",
-  authDomain: "cloud-storage-vault-c9e0c.firebaseapp.com",
-  projectId: "cloud-storage-vault-c9e0c",
-  storageBucket: "cloud-storage-vault-c9e0c.appspot.com",
-  messagingSenderId: "1098024457778",
-  // Fix the appId format - it should be a valid Firebase app ID
-  appId: "1:1098024457778:web:0a5e5a2e0b4e3f3f3f3f3f",
-  measurementId: "G-KEJ7VKNTZP"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: "G-J4653VGJQX"
 };
 
 // Try to fix the appId if it looks invalid (placeholder format)
@@ -92,6 +91,15 @@ window.firebaseServices = {
 
       // Check if we're on Vercel
       const isVercel = window.location.hostname.includes('vercel.app');
+      const isDomainAuthorized = window.location.origin === firebaseConfig.authDomain;
+
+      if (!isDomainAuthorized && !isVercel) {
+        console.warn('Domain not authorized:', window.location.origin);
+        // Use redirect method as fallback
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
       console.log('Is Vercel deployment:', isVercel);
 
       // First, check if we're returning from a redirect
@@ -295,3 +303,18 @@ window.firebaseStorage = {
 };
 
 console.log('Firebase storage functions exported to window.firebaseStorage');
+
+// Add size checking before upload
+async function uploadFile(file) {
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB or adjust as needed
+    
+    if (file.size > MAX_FILE_SIZE) {
+        throw new Error(`File size exceeds limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+    }
+    
+    // Proceed with upload
+    const storageRef = ref(storage, 'files/' + file.name);
+    return uploadBytes(storageRef, file);
+}
+
+

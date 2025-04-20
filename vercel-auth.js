@@ -77,6 +77,25 @@ function showAuthNotification(message, type = 'info') {
     }
 }
 
+// Add initialization check
+function waitForFirebase(timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const start = Date.now();
+        
+        const check = () => {
+            if (window.firebaseServices && window.firebaseServices.auth) {
+                resolve();
+            } else if (Date.now() - start > timeout) {
+                reject(new Error('Firebase initialization timeout'));
+            } else {
+                setTimeout(check, 100);
+            }
+        };
+        
+        check();
+    });
+}
+
 // Check for redirect result on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Vercel Auth: Checking for redirect result');
@@ -141,23 +160,12 @@ async function checkRedirectResult() {
 // Function to sign in with Google
 async function signInWithGoogle() {
     try {
-        console.log('Vercel Auth: Starting Google sign-in');
-        showAuthNotification('Redirecting to Google sign-in...', 'info');
-
-        // Set a timeout to show an error message if the redirect takes too long
-        const redirectTimeout = setTimeout(() => {
-            console.error('Vercel Auth: Redirect timeout - taking too long');
-            showAuthNotification('Sign-in is taking too long. Please try again or check your connection.', 'error');
-            // We can't reset the button here as the page might have already started redirecting
-        }, 8000); // 8 seconds timeout
-
-        // Start the redirect process
+        await waitForFirebase();
+        // Proceed with sign-in
         await signInWithRedirect(auth, googleProvider);
-        // Page will redirect, so no code after this will execute
-        // This means the timeout will be cleared when the page reloads
     } catch (error) {
-        console.error('Vercel Auth: Error starting Google sign-in', error);
-        showAuthNotification('Error starting sign-in: ' + error.message, 'error');
+        console.error('Firebase initialization failed:', error);
+        throw error;
     }
 }
 
@@ -169,3 +177,4 @@ window.vercelAuth = {
 };
 
 console.log('Vercel Auth: Module loaded and ready');
+
