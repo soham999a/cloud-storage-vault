@@ -45,12 +45,33 @@ if (isVercelDeployment) {
   console.log('IMPORTANT: Make sure to add ' + window.location.origin + ' to Firebase authorized domains');
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-const analytics = getAnalytics(app);
+// Initialize Firebase with proper error handling and event emission
+const initializeFirebaseServices = async () => {
+  try {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+    const analytics = getAnalytics(app);
+
+    window.firebaseServices = {
+      app,
+      auth,
+      storage,
+      analytics,
+      initialized: true
+    };
+
+    // Dispatch event when Firebase is ready
+    window.dispatchEvent(new CustomEvent('firebaseInitialized'));
+    console.log('Firebase services initialized successfully');
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
+    window.dispatchEvent(new CustomEvent('firebaseInitError', { detail: error }));
+  }
+};
+
+// Call initialization
+initializeFirebaseServices();
 
 // Initialize Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
@@ -316,5 +337,6 @@ async function uploadFile(file) {
     const storageRef = ref(storage, 'files/' + file.name);
     return uploadBytes(storageRef, file);
 }
+
 
 

@@ -7,19 +7,20 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Firebase Auth Checker initializing...');
     
-    // Wait for Firebase to be initialized
-    const checkFirebase = setInterval(function() {
-        if (window.firebaseConfig && window.firebaseServices) {
-            clearInterval(checkFirebase);
-            runAuthChecks();
+    // Listen for Firebase initialization
+    window.addEventListener('firebaseInitialized', () => {
+        console.log('Firebase initialized, running auth checks...');
+        runAuthChecks();
+    });
+
+    // Handle initialization error
+    window.addEventListener('firebaseInitError', (event) => {
+        console.error('Firebase initialization failed:', event.detail);
+        // Show user-friendly error message
+        if (typeof showNotification === 'function') {
+            showNotification('error', 'Authentication service initialization failed. Please refresh the page.');
         }
-    }, 1000);
-    
-    // Maximum wait time - 10 seconds
-    setTimeout(function() {
-        clearInterval(checkFirebase);
-        console.error('Firebase Auth Checker: Timed out waiting for Firebase to initialize');
-    }, 10000);
+    });
 });
 
 /**
@@ -161,3 +162,4 @@ window.checkFirebaseAuth = runAuthChecks;
 
 console.log('Firebase Auth Checker script loaded. Will run automatically when Firebase is ready.');
 console.log('You can also run checks manually with window.checkFirebaseAuth()');
+

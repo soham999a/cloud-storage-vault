@@ -7,15 +7,25 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Redirect Handler initializing...');
     
-    // Check if we're on Vercel
-    const isVercel = window.location.hostname.includes('vercel.app');
-    console.log('Is Vercel deployment:', isVercel);
-    
-    // If we're on Vercel, we need to handle redirects more aggressively
-    if (isVercel) {
-        console.log('Vercel deployment detected, setting up redirect handler');
+    // Listen for Firebase initialization
+    window.addEventListener('firebaseInitialized', () => {
+        console.log('Firebase initialized, checking redirect result...');
         checkRedirectResult();
-    }
+    });
+
+    // Set a reasonable timeout
+    const timeout = setTimeout(() => {
+        if (!window.firebaseServices?.initialized) {
+            console.error('Firebase initialization timed out');
+            // Show user-friendly error message
+            if (typeof showNotification === 'function') {
+                showNotification('error', 'Authentication service initialization failed. Please refresh the page.');
+            }
+        }
+    }, 15000); // 15 seconds timeout
+
+    // Cleanup timeout if Firebase initializes
+    window.addEventListener('firebaseInitialized', () => clearTimeout(timeout));
 });
 
 /**
@@ -113,3 +123,4 @@ function handleRedirectResult() {
 window.checkFirebaseRedirect = checkRedirectResult;
 
 console.log('Redirect Handler script loaded');
+
