@@ -1,0 +1,16 @@
+{
+  "name": "cloud-secure-vault-root",
+  "version": "1.0.0",
+  "description": "Cloud Storage Vault Application",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.4",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "postcss-import": "^16.1.0"
+  }
+}

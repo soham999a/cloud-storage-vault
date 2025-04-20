@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Secure Vault</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0a0a0a;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #333;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff00;
+        }
+        .nav {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-link {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .nav-link:hover {
+            color: #00ff00;
+        }
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            color: #cccccc;
+        }
+        .btn {
+            padding: 12px 24px;
+            background-color: #00ff00;
+            color: #000000;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #33ff33;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 50px;
+        }
+        .feature {
+            background-color: #1a1a1a;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .feature h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #00ff00;
+        }
+        .feature p {
+            color: #cccccc;
+        }
+        .footer {
+            margin-top: 50px;
+            padding: 20px 0;
+            border-top: 1px solid #333;
+            text-align: center;
+            color: #cccccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">Cloud Secure Vault</div>
+            <nav class="nav">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link">Features</a>
+                <a href="#" class="nav-link">Pricing</a>
+                <a href="#" class="nav-link">Contact</a>
+                <a href="#" class="nav-link">Login</a>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <h1>Secure Cloud Storage Solution</h1>
+            <p>Store, manage, and share your files securely with our advanced cloud storage platform.</p>
+            <button class="btn" onclick="alert('Get Started clicked!')">Get Started</button>
+        </section>
+
+        <section class="features">
+            <div class="feature">
+                <h3>End-to-End Encryption</h3>
+                <p>Your files are encrypted before they leave your device and can only be decrypted by you.</p>
+            </div>
+            <div class="feature">
+                <h3>Easy File Sharing</h3>
+                <p>Share files and folders with anyone, with customizable access controls and expiration dates.</p>
+            </div>
+            <div class="feature">
+                <h3>Automatic Backup</h3>
+                <p>Set up automatic backups to ensure your important files are always protected.</p>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>&copy; 2025 Cloud Secure Vault. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Cloud Secure Vault loaded successfully!');
+        });
+    </script>
+</body>
+</html>
