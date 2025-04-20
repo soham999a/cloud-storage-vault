@@ -22,53 +22,28 @@ class DirectUploadService {
    */
   async initBucket() {
     try {
-      console.log('Checking if bucket exists...');
-
-      // Check if bucket exists
       const response = await fetch(
         `${this.supabaseUrl}/storage/v1/bucket/${this.bucketName}`,
         {
-          method: 'GET',
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${this.supabaseKey}`,
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({
+            name: this.bucketName,
+            public: false,  // Changed to false for security
+            file_size_limit: 50 * 1024 * 1024 // Reduced to 50MB
+          })
         }
       );
 
-      if (response.status === 404) {
-        // Bucket doesn't exist, create it
-        console.log(`Bucket '${this.bucketName}' doesn't exist, creating...`);
-
-        const createResponse = await fetch(
-          `${this.supabaseUrl}/storage/v1/bucket`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${this.supabaseKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              name: this.bucketName,
-              public: true,
-              file_size_limit: 100 * 1024 * 1024 // 100MB
-            })
-          }
-        );
-
-        if (!createResponse.ok) {
-          const errorData = await createResponse.json();
-          console.warn('Error creating bucket:', errorData);
-        } else {
-          console.log(`Bucket '${this.bucketName}' created successfully`);
-        }
-      } else if (response.ok) {
-        console.log(`Bucket '${this.bucketName}' already exists`);
-      } else {
-        console.warn('Error checking bucket:', await response.json());
+      if (!response.ok && response.status !== 409) { // Ignore if bucket already exists
+        const errorData = await response.json();
+        console.error('Error creating bucket:', errorData);
       }
     } catch (error) {
-      console.error('Error initializing bucket:', error);
+      console.error('Error checking bucket:', error);
     }
   }
 
@@ -247,3 +222,4 @@ class DirectUploadService {
 // Export the direct upload service
 window.directUploadService = new DirectUploadService();
 console.log('Direct upload service exported to window.directUploadService');
+

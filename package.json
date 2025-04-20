@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/soham999a/cloud-storage-vault#readme",
   "dependencies": {
+    "firebase": "^11.6.0",
     "serve": "^14.2.1"
   },
   "devDependencies": {
