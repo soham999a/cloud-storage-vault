@@ -3456,16 +3456,27 @@
 
         // Google Sign-in for Login
         document.getElementById('google-login-btn').addEventListener('click', function() {
+            // Store button reference
+            const loginButton = this;
+
             // Show loading state
-            const originalText = this.innerHTML;
-            this.innerHTML = '<div class="loading-spinner"></div> Signing in...';
-            this.disabled = true;
+            const originalText = loginButton.innerHTML;
+            loginButton.innerHTML = '<div class="loading-spinner"></div> Signing in...';
+            loginButton.disabled = true;
+
+            // Set a timeout to reset the button if it takes too long
+            const buttonResetTimeout = setTimeout(function() {
+                loginButton.innerHTML = originalText;
+                loginButton.disabled = false;
+                showNotification('error', 'Sign-in is taking too long. Please try again.', 3000);
+            }, 10000); // 10 seconds timeout
 
             // Check if Firebase services are available
             if (!window.firebaseServices) {
                 showNotification('error', 'Firebase services are not yet initialized. Please try again in a moment.', 3000);
-                this.innerHTML = originalText;
-                this.disabled = false;
+                loginButton.innerHTML = originalText;
+                loginButton.disabled = false;
+                clearTimeout(buttonResetTimeout);
                 return;
             }
 
@@ -3490,6 +3501,10 @@
                     .catch(error => {
                         console.error('Vercel Auth Error:', error);
                         showNotification('error', 'Sign-in failed: ' + error.message, 5000);
+                        // Reset button state on error
+                        loginButton.innerHTML = originalText;
+                        loginButton.disabled = false;
+                        clearTimeout(buttonResetTimeout);
                     });
                 return; // Exit early as we're handling auth differently
             } else if (isVercel) {
@@ -3562,24 +3577,37 @@
                 .finally(() => {
                     // Only reset button if we're not redirecting
                     if (!isVercel) {
-                        this.innerHTML = originalText;
-                        this.disabled = false;
+                        loginButton.innerHTML = originalText;
+                        loginButton.disabled = false;
                     }
+                    // Clear the timeout since we're done
+                    clearTimeout(buttonResetTimeout);
                 });
         });
 
         // Google Sign-in for Registration
         document.getElementById('google-register-btn').addEventListener('click', function() {
+            // Store button reference
+            const registerButton = this;
+
             // Show loading state
-            const originalText = this.innerHTML;
-            this.innerHTML = '<div class="loading-spinner"></div> Signing up...';
-            this.disabled = true;
+            const originalText = registerButton.innerHTML;
+            registerButton.innerHTML = '<div class="loading-spinner"></div> Signing up...';
+            registerButton.disabled = true;
+
+            // Set a timeout to reset the button if it takes too long
+            const buttonResetTimeout = setTimeout(function() {
+                registerButton.innerHTML = originalText;
+                registerButton.disabled = false;
+                showNotification('error', 'Sign-up is taking too long. Please try again.', 3000);
+            }, 10000); // 10 seconds timeout
 
             // Check if Firebase services are available
             if (!window.firebaseServices) {
                 showNotification('error', 'Firebase services are not yet initialized. Please try again in a moment.', 3000);
-                this.innerHTML = originalText;
-                this.disabled = false;
+                registerButton.innerHTML = originalText;
+                registerButton.disabled = false;
+                clearTimeout(buttonResetTimeout);
                 return;
             }
 
@@ -3604,6 +3632,10 @@
                     .catch(error => {
                         console.error('Vercel Auth Error:', error);
                         showNotification('error', 'Sign-up failed: ' + error.message, 5000);
+                        // Reset button state on error
+                        registerButton.innerHTML = originalText;
+                        registerButton.disabled = false;
+                        clearTimeout(buttonResetTimeout);
                     });
                 return; // Exit early as we're handling auth differently
             } else if (isVercel) {
@@ -3680,9 +3712,11 @@
                 .finally(() => {
                     // Only reset button if we're not redirecting
                     if (!isVercel) {
-                        this.innerHTML = originalText;
-                        this.disabled = false;
+                        registerButton.innerHTML = originalText;
+                        registerButton.disabled = false;
                     }
+                    // Clear the timeout since we're done
+                    clearTimeout(buttonResetTimeout);
                 });
         });
 

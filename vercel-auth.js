@@ -6,9 +6,9 @@
 
 // Import Firebase modules directly
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { 
-    getAuth, 
-    GoogleAuthProvider, 
+import {
+    getAuth,
+    GoogleAuthProvider,
     signInWithRedirect,
     getRedirectResult,
     onAuthStateChanged
@@ -43,7 +43,7 @@ googleProvider.addScope('email');
 // Simple notification function
 function showAuthNotification(message, type = 'info') {
     console.log(`Auth Notification (${type}):`, message);
-    
+
     // Check if the main notification function exists
     if (typeof window.showNotification === 'function') {
         window.showNotification(type, message, 5000);
@@ -57,7 +57,7 @@ function showAuthNotification(message, type = 'info') {
         notification.style.padding = '10px 20px';
         notification.style.borderRadius = '4px';
         notification.style.zIndex = '9999';
-        
+
         // Set colors based on type
         if (type === 'error') {
             notification.style.backgroundColor = '#f44336';
@@ -66,10 +66,10 @@ function showAuthNotification(message, type = 'info') {
         } else {
             notification.style.backgroundColor = '#2196F3';
         }
-        
+
         notification.style.color = 'white';
         document.body.appendChild(notification);
-        
+
         // Remove after 5 seconds
         setTimeout(() => {
             document.body.removeChild(notification);
@@ -81,7 +81,7 @@ function showAuthNotification(message, type = 'info') {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Vercel Auth: Checking for redirect result');
     checkRedirectResult();
-    
+
     // Set up auth state listener
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Close modals if they exist
             const loginSection = document.getElementById('login-section');
             const registerSection = document.getElementById('register-section');
-            
+
             if (loginSection) loginSection.classList.remove('active');
             if (registerSection) registerSection.remove('active');
         } else {
@@ -103,15 +103,15 @@ async function checkRedirectResult() {
     try {
         console.log('Vercel Auth: Checking redirect result');
         const result = await getRedirectResult(auth);
-        
+
         if (result && result.user) {
             console.log('Vercel Auth: Successfully signed in after redirect', result.user.email);
             showAuthNotification('Successfully signed in with Google!', 'success');
-            
+
             // Create user document if needed
             try {
                 const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-                
+
                 if (!userDoc.exists()) {
                     console.log('Vercel Auth: Creating new user document');
                     await setDoc(doc(db, 'users', result.user.uid), {
@@ -143,8 +143,18 @@ async function signInWithGoogle() {
     try {
         console.log('Vercel Auth: Starting Google sign-in');
         showAuthNotification('Redirecting to Google sign-in...', 'info');
+
+        // Set a timeout to show an error message if the redirect takes too long
+        const redirectTimeout = setTimeout(() => {
+            console.error('Vercel Auth: Redirect timeout - taking too long');
+            showAuthNotification('Sign-in is taking too long. Please try again or check your connection.', 'error');
+            // We can't reset the button here as the page might have already started redirecting
+        }, 8000); // 8 seconds timeout
+
+        // Start the redirect process
         await signInWithRedirect(auth, googleProvider);
         // Page will redirect, so no code after this will execute
+        // This means the timeout will be cleared when the page reloads
     } catch (error) {
         console.error('Vercel Auth: Error starting Google sign-in', error);
         showAuthNotification('Error starting sign-in: ' + error.message, 'error');
