@@ -7,9 +7,9 @@
     "FIREBASE_AUTH_DOMAIN": "cloud-storage-vault.firebaseapp.com",
     "FIREBASE_PROJECT_ID": "cloud-storage-vault",
     "FIREBASE_STORAGE_BUCKET": "cloud-storage-vault.firebasestorage.app",
-    "FIREBASE_MESSAGING_SENDER_ID": "145631142887",
+    "FIREBASE_MESSAGING_SENDER_ID": "873413278959",
     "FIREBASE_APP_ID": "1:873413278959:web:f4c8aef971d7038cb5ef1a",
-    "SUPABASE_URL": "https://rpznczfcbshqukwiipvy.supabase.co",
-    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwem5jemZjYnNocXVrd2lpcHZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk0NTQ4MDcsImV4cCI6MjAxNTAzMDgwN30.Nh83ebqzf1iGHTaGzXhq7gQKyNIBqQQkYTZEb_lTrXQ"
+    "NODE_ENV": "production"
   }
 }
+
