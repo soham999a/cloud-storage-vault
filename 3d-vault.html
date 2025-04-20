@@ -55,24 +55,6 @@
 
     <!-- Direct Files Display -->
     <script src="direct-files-display.js"></script>
-
-    <!-- Firebase Auth Checker -->
-    <script src="firebase-auth-checker.js"></script>
-
-    <!-- Redirect Handler -->
-    <script src="redirect-handler.js"></script>
-
-    <!-- Vercel-specific Auth (only loads on Vercel) -->
-    <script>
-        // Check if we're on Vercel
-        if (window.location.hostname.includes('vercel.app')) {
-            console.log('Loading Vercel-specific authentication...');
-            const vercelAuthScript = document.createElement('script');
-            vercelAuthScript.type = 'module';
-            vercelAuthScript.src = 'vercel-auth.js';
-            document.head.appendChild(vercelAuthScript);
-        }
-    </script>
     <style>
         * {
             margin: 0;
@@ -3373,161 +3355,28 @@
             this.reset();
         });
 
-        // Function to check if the current domain is authorized in Firebase
-        function checkDomainAuthorization() {
-            const currentDomain = window.location.origin;
-            const authDomain = window.firebaseConfig?.authDomain;
-
-            console.log('Checking domain authorization:');
-            console.log('- Current domain:', currentDomain);
-            console.log('- Auth domain:', authDomain);
-
-            // Check if the current domain is the same as the auth domain or localhost
-            const isLocalhost = currentDomain.includes('localhost') || currentDomain.includes('127.0.0.1');
-            const isAuthDomain = authDomain && (currentDomain.includes(authDomain) || authDomain.includes(currentDomain));
-            const isVercelApp = currentDomain.includes('vercel.app');
-
-            if (isLocalhost) {
-                console.log('Running on localhost - should be authorized for development');
-                return true;
-            } else if (isAuthDomain) {
-                console.log('Current domain matches auth domain - should be authorized');
-                return true;
-            } else if (isVercelApp) {
-                console.log('Running on Vercel app - make sure this domain is added to Firebase authorized domains');
-                // This is likely OK if properly configured in Firebase console
-                return true;
-            } else {
-                console.warn('Current domain may not be authorized in Firebase console!');
-                console.warn('Please add ' + currentDomain + ' to the authorized domains in Firebase console');
-                return false;
-            }
-        }
-
-        // Check for redirect result on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            if (window.firebaseServices) {
-                console.log('Checking for redirect result on page load');
-                handleRedirectResult();
-            } else {
-                // Wait for Firebase to initialize
-                const checkInterval = setInterval(function() {
-                    if (window.firebaseServices) {
-                        clearInterval(checkInterval);
-                        console.log('Firebase initialized, checking for redirect result');
-                        handleRedirectResult();
-                    }
-                }, 500);
-
-                // Clear interval after 10 seconds to prevent infinite checking
-                setTimeout(function() {
-                    clearInterval(checkInterval);
-                }, 10000);
-            }
-        });
-
-        // Handle redirect result
-        function handleRedirectResult() {
-            try {
-                if (typeof window.firebaseServices.getRedirectResult === 'function') {
-                    // Use the exported function if available
-                    window.firebaseServices.getRedirectResult().then(function(result) {
-                        if (result && result.user) {
-                            console.log('Successfully signed in after redirect:', result.user.email);
-                            // Close login/register modals if open
-                            document.getElementById('login-section').classList.remove('active');
-                            document.getElementById('register-section').classList.remove('active');
-                            // Show success notification
-                            showNotification('success', 'Successfully signed in with Google!', 3000);
-                        }
-                    }).catch(function(error) {
-                        console.error('Error getting redirect result:', error);
-                        if (error.code === 'auth/credential-already-in-use') {
-                            showNotification('error', 'This Google account is already linked to another account', 5000);
-                        }
-                    });
-                } else {
-                    console.warn('getRedirectResult function not available in firebaseServices');
-                }
-            } catch (error) {
-                console.error('Error in handleRedirectResult:', error);
-            }
-        }
-
         // Google Sign-in for Login
         document.getElementById('google-login-btn').addEventListener('click', function() {
-            // Store button reference
-            const loginButton = this;
-
             // Show loading state
-            const originalText = loginButton.innerHTML;
-            loginButton.innerHTML = '<div class="loading-spinner"></div> Signing in...';
-            loginButton.disabled = true;
-
-            // Set a timeout to reset the button if it takes too long
-            const buttonResetTimeout = setTimeout(function() {
-                loginButton.innerHTML = originalText;
-                loginButton.disabled = false;
-                showNotification('error', 'Sign-in is taking too long. Please try again.', 3000);
-            }, 10000); // 10 seconds timeout
+            const originalText = this.innerHTML;
+            this.innerHTML = '<div class="loading-spinner"></div> Signing in...';
+            this.disabled = true;
 
             // Check if Firebase services are available
             if (!window.firebaseServices) {
-                showNotification('error', 'Firebase services are not yet initialized. Please try again in a moment.', 3000);
-                loginButton.innerHTML = originalText;
-                loginButton.disabled = false;
-                clearTimeout(buttonResetTimeout);
+                alert('Firebase services are not yet initialized. Please try again in a moment.');
+                this.innerHTML = originalText;
+                this.disabled = false;
                 return;
             }
 
-            // Check if we're on Vercel
-            const isVercel = window.location.hostname.includes('vercel.app');
-
-            // Check domain authorization
-            const isDomainAuthorized = checkDomainAuthorization();
-            if (!isDomainAuthorized && !isVercel) {
-                console.warn('Domain authorization check failed - attempting sign-in anyway');
-                // We'll still try, but log a warning
-            }
-
             // Sign in with Google
-            console.log('Initiating Google sign-in from login button');
-
-            // For Vercel deployments, use Vercel-specific auth
-            if (isVercel && window.vercelAuth) {
-                console.log('Using Vercel-specific authentication');
-                showNotification('info', 'Redirecting to Google sign-in...', 2000);
-                window.vercelAuth.signInWithGoogle()
-                    .catch(error => {
-                        console.error('Vercel Auth Error:', error);
-                        showNotification('error', 'Sign-in failed: ' + error.message, 5000);
-                        // Reset button state on error
-                        loginButton.innerHTML = originalText;
-                        loginButton.disabled = false;
-                        clearTimeout(buttonResetTimeout);
-                    });
-                return; // Exit early as we're handling auth differently
-            } else if (isVercel) {
-                console.warn('Vercel Auth not loaded yet, falling back to standard auth');
-                showNotification('info', 'Redirecting to Google sign-in...', 2000);
-            }
-
-            // Standard Firebase auth for non-Vercel environments
             window.firebaseServices.signInWithGoogle()
                 .then((result) => {
-                    // If result is null, we're using redirect method and page will reload
-                    if (!result) {
-                        console.log('Using redirect method, page will reload after authentication');
-                        return;
-                    }
-
                     // Google sign-in successful
                     const user = result.user;
                     console.log('Google sign-in successful:', user.email);
                     document.getElementById('login-section').classList.remove('active');
-
-                    // Show success notification
-                    showNotification('success', 'Successfully signed in with Google!', 3000);
 
                     // Track login event with analytics
                     window.firebaseServices.logAnalyticsEvent('login', {
@@ -3566,92 +3415,35 @@
                         errorMessage = 'Sign-in cancelled. Multiple pop-up requests detected.';
                     } else if (error.code === 'auth/network-request-failed') {
                         errorMessage = 'Network error. Please check your internet connection and try again.';
-                    } else if (error.code === 'auth/unauthorized-domain') {
-                        errorMessage = 'This domain is not authorized for Google sign-in. Please contact the developer.';
-                        console.error('Unauthorized domain error. Add ' + window.location.origin + ' to Firebase console authorized domains.');
                     }
 
-                    // Use notification instead of alert for better UX
-                    showNotification('error', errorMessage, 5000);
+                    alert(errorMessage);
                 })
                 .finally(() => {
-                    // Only reset button if we're not redirecting
-                    if (!isVercel) {
-                        loginButton.innerHTML = originalText;
-                        loginButton.disabled = false;
-                    }
-                    // Clear the timeout since we're done
-                    clearTimeout(buttonResetTimeout);
+                    // Reset button
+                    this.innerHTML = originalText;
+                    this.disabled = false;
                 });
         });
 
         // Google Sign-in for Registration
         document.getElementById('google-register-btn').addEventListener('click', function() {
-            // Store button reference
-            const registerButton = this;
-
             // Show loading state
-            const originalText = registerButton.innerHTML;
-            registerButton.innerHTML = '<div class="loading-spinner"></div> Signing up...';
-            registerButton.disabled = true;
-
-            // Set a timeout to reset the button if it takes too long
-            const buttonResetTimeout = setTimeout(function() {
-                registerButton.innerHTML = originalText;
-                registerButton.disabled = false;
-                showNotification('error', 'Sign-up is taking too long. Please try again.', 3000);
-            }, 10000); // 10 seconds timeout
+            const originalText = this.innerHTML;
+            this.innerHTML = '<div class="loading-spinner"></div> Signing up...';
+            this.disabled = true;
 
             // Check if Firebase services are available
             if (!window.firebaseServices) {
-                showNotification('error', 'Firebase services are not yet initialized. Please try again in a moment.', 3000);
-                registerButton.innerHTML = originalText;
-                registerButton.disabled = false;
-                clearTimeout(buttonResetTimeout);
+                alert('Firebase services are not yet initialized. Please try again in a moment.');
+                this.innerHTML = originalText;
+                this.disabled = false;
                 return;
             }
 
-            // Check if we're on Vercel
-            const isVercel = window.location.hostname.includes('vercel.app');
-
-            // Check domain authorization
-            const isDomainAuthorized = checkDomainAuthorization();
-            if (!isDomainAuthorized && !isVercel) {
-                console.warn('Domain authorization check failed - attempting sign-up anyway');
-                // We'll still try, but log a warning
-            }
-
             // Sign in with Google (same process as login, but with different analytics event)
-            console.log('Initiating Google sign-in from register button');
-
-            // For Vercel deployments, use Vercel-specific auth
-            if (isVercel && window.vercelAuth) {
-                console.log('Using Vercel-specific authentication for registration');
-                showNotification('info', 'Redirecting to Google sign-in...', 2000);
-                window.vercelAuth.signInWithGoogle()
-                    .catch(error => {
-                        console.error('Vercel Auth Error:', error);
-                        showNotification('error', 'Sign-up failed: ' + error.message, 5000);
-                        // Reset button state on error
-                        registerButton.innerHTML = originalText;
-                        registerButton.disabled = false;
-                        clearTimeout(buttonResetTimeout);
-                    });
-                return; // Exit early as we're handling auth differently
-            } else if (isVercel) {
-                console.warn('Vercel Auth not loaded yet, falling back to standard auth');
-                showNotification('info', 'Redirecting to Google sign-in...', 2000);
-            }
-
-            // Standard Firebase auth for non-Vercel environments
             window.firebaseServices.signInWithGoogle()
                 .then((result) => {
-                    // If result is null, we're using redirect method and page will reload
-                    if (!result) {
-                        console.log('Using redirect method, page will reload after authentication');
-                        return;
-                    }
-
                     // Google sign-in successful
                     const user = result.user;
                     console.log('Google sign-up successful:', user.email);
@@ -3676,17 +3468,15 @@
                                     sharedFiles: 0,
                                     provider: 'google'
                                 }).then(() => {
-                                    showNotification('success', 'Account created successfully with Google!', 3000);
+                                    alert('Account created successfully with Google!');
                                 });
                             } else {
                                 // User already exists
                                 console.log('User document already exists');
-                                showNotification('info', 'You already have an account. Signed in successfully!', 3000);
                             }
                         })
                         .catch(error => {
                             console.error('Error checking/creating user document:', error);
-                            showNotification('error', 'Error creating user profile. Please try again.', 3000);
                         });
                 })
                 .catch((error) => {
@@ -3701,22 +3491,14 @@
                         errorMessage = 'Sign-up cancelled. Multiple pop-up requests detected.';
                     } else if (error.code === 'auth/network-request-failed') {
                         errorMessage = 'Network error. Please check your internet connection and try again.';
-                    } else if (error.code === 'auth/unauthorized-domain') {
-                        errorMessage = 'This domain is not authorized for Google sign-up. Please contact the developer.';
-                        console.error('Unauthorized domain error. Add ' + window.location.origin + ' to Firebase console authorized domains.');
                     }
 
-                    // Use notification instead of alert for better UX
-                    showNotification('error', errorMessage, 5000);
+                    alert(errorMessage);
                 })
                 .finally(() => {
-                    // Only reset button if we're not redirecting
-                    if (!isVercel) {
-                        registerButton.innerHTML = originalText;
-                        registerButton.disabled = false;
-                    }
-                    // Clear the timeout since we're done
-                    clearTimeout(buttonResetTimeout);
+                    // Reset button
+                    this.innerHTML = originalText;
+                    this.disabled = false;
                 });
         });
 

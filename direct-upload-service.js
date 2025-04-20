@@ -8,7 +8,7 @@ class DirectUploadService {
         this.maxFileSizeBytes = this.maxFileSizeMB * 1024 * 1024;
         console.log(`DirectUploadService initialized with ${this.maxFileSizeMB}MB limit`);
     }
-
+    
     /**
      * Check if a file is within the size limit
      * @param {File} file - The file to check
@@ -17,7 +17,7 @@ class DirectUploadService {
     isWithinSizeLimit(file) {
         return file.size <= this.maxFileSizeBytes;
     }
-
+    
     /**
      * Upload a file
      * @param {string} userId - The user ID
@@ -29,24 +29,24 @@ class DirectUploadService {
         return new Promise(async (resolve, reject) => {
             try {
                 console.log(`DirectUploadService: Uploading file ${file.name} (${file.size} bytes) for user ${userId}`);
-
+                
                 // Check file size
                 if (!this.isWithinSizeLimit(file)) {
                     progressCallback(0, `File exceeds ${this.maxFileSizeMB}MB limit for free users`);
                     reject(new Error(`File exceeds ${this.maxFileSizeMB}MB limit for free users`));
                     return;
                 }
-
+                
                 progressCallback(10, 'Preparing file...');
-
+                
                 // Create a blob URL for the file
                 const fileUrl = URL.createObjectURL(file);
-
+                
                 // Generate a unique ID
                 const fileId = 'direct_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
+                
                 progressCallback(30, 'Processing file...');
-
+                
                 // Create file metadata
                 const fileData = {
                     id: fileId,
@@ -60,25 +60,22 @@ class DirectUploadService {
                     isLocal: true,
                     category: this.getFileCategory(file.type, file.name)
                 };
-
+                
                 progressCallback(50, 'Storing file...');
-
+                
                 // Add a small delay to show progress
                 await new Promise(r => setTimeout(r, 500));
-
+                
                 // Add file to direct file manager
                 window.directFileManager.addFile(fileData);
-
+                
                 progressCallback(80, 'Finalizing...');
-
+                
                 // Add a small delay to show progress
                 await new Promise(r => setTimeout(r, 300));
-
-                // Update dashboard stats directly
-                this.updateDashboardStats(userId);
-
+                
                 progressCallback(100, 'File stored successfully');
-
+                
                 // Resolve with the result
                 resolve(fileData);
             } catch (error) {
@@ -87,61 +84,7 @@ class DirectUploadService {
             }
         });
     }
-
-    /**
-     * Update dashboard stats after file upload
-     * @param {string} userId - The user ID
-     */
-    updateDashboardStats(userId) {
-        try {
-            // Get all files from localStorage
-            let allFiles = [];
-            const filesJson = localStorage.getItem('directVaultFiles');
-            if (filesJson) {
-                allFiles = JSON.parse(filesJson);
-            }
-
-            // Filter files for this user
-            const userFiles = allFiles.filter(file => file.userId === userId);
-
-            // Calculate total storage used
-            let totalBytes = 0;
-            userFiles.forEach(file => {
-                totalBytes += file.size || 0;
-            });
-
-            // Format storage size
-            let storageText = '0 GB';
-            if (totalBytes > 0) {
-                if (totalBytes < 1024 * 1024) {
-                    storageText = (totalBytes / 1024).toFixed(2) + ' KB';
-                } else if (totalBytes < 1024 * 1024 * 1024) {
-                    storageText = (totalBytes / (1024 * 1024)).toFixed(2) + ' MB';
-                } else {
-                    storageText = (totalBytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-                }
-            }
-
-            // Update storage display
-            const storageDisplay = document.querySelector('.dashboard-container .stat-card:nth-child(1) .stat-value');
-            if (storageDisplay) {
-                storageDisplay.textContent = storageText;
-                console.log('Updated storage display to:', storageText);
-            }
-
-            // Update file count
-            const fileCountDisplay = document.querySelector('.dashboard-container .stat-card:nth-child(2) .stat-value');
-            if (fileCountDisplay) {
-                fileCountDisplay.textContent = userFiles.length.toString();
-                console.log('Updated file count display to:', userFiles.length);
-            }
-
-            console.log(`Updated dashboard stats: ${userFiles.length} files, ${storageText} used`);
-        } catch (error) {
-            console.error('Error updating dashboard stats:', error);
-        }
-    }
-
+    
     /**
      * Get file category based on file type and name
      * @param {string} fileType - The file's MIME type

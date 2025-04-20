@@ -46,7 +46,7 @@ class SupabaseStorageService {
     this.initialized = false;
     this.bucketName = 'cloud-vault-files';
     this.supabase = null;
-    this.maxFileSize = 50 * 1024 * 1024; // 50MB default limit
+    this.initPromise = null;
   }
 
   /**
@@ -72,36 +72,40 @@ class SupabaseStorageService {
    */
   async ensureBucketExists() {
     if (!this.supabase) {
-      console.error('Supabase client not initialized');
+      console.warn('Supabase client not available yet');
       return;
     }
 
     try {
+      // Check if bucket exists
       const { data: buckets, error: listError } = await this.supabase.storage.listBuckets();
-      
+
       if (listError) {
-        console.error('Error listing buckets:', listError);
+        console.warn('Error listing buckets:', listError);
         return;
       }
 
       const bucketExists = buckets.some(bucket => bucket.name === this.bucketName);
 
       if (!bucketExists) {
-        console.log(`Creating bucket '${this.bucketName}'...`);
-        const { error } = await this.supabase.storage.createBucket(this.bucketName, {
-          public: false, // Set to private for security
-          fileSizeLimit: this.maxFileSize,
-          allowedMimeTypes: ['image/*', 'application/pdf', 'text/*'],
-          replicationCount: 1
+        console.log(`Bucket '${this.bucketName}' doesn't exist, creating...`);
+        // Create the bucket with public access
+        const { data, error } = await this.supabase.storage.createBucket(this.bucketName, {
+          public: true,
+          fileSizeLimit: 100 * 1024 * 1024 // 100MB limit
         });
 
         if (error) {
-          console.error('Bucket creation error:', error);
+          console.error('Error creating bucket:', error);
           return;
         }
+
+        console.log('Created storage bucket:', data);
+      } else {
+        console.log(`Bucket '${this.bucketName}' already exists`);
       }
     } catch (error) {
-      console.error('Bucket operation error:', error);
+      console.error('Error checking/creating bucket:', error);
     }
   }
 
@@ -254,4 +258,3 @@ if (window.supabase) {
 
   console.log('Supabase script loading immediately...');
 }
-
