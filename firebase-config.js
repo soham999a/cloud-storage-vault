@@ -7,12 +7,12 @@ import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/9.22.
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID
+  apiKey: "AIzaSyDQnxJpj0rlnKSeAKV5Qxj8YnxvTNmGQyY",
+  authDomain: "cloud-storage-vault-c9e0c.firebaseapp.com",
+  projectId: "cloud-storage-vault-c9e0c",
+  storageBucket: "cloud-storage-vault-c9e0c.appspot.com",
+  messagingSenderId: "1098024457778",
+  appId: "1:1098024457778:web:0a5e5a2e0b4e3f3f3f3f3f"
 };
 
 // Initialize Firebase
@@ -183,5 +183,6 @@ console.log('Firebase Config:', {
   ...firebaseConfig,
   apiKey: firebaseConfig.apiKey.substring(0, 8) + '...' // Only show first 8 chars of API key for security
 });
+
 
 
