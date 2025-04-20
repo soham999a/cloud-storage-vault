@@ -1,16 +1,42 @@
 {
-  "name": "cloud-secure-vault-root",
+  "name": "cloud-storage-vault",
   "version": "1.0.0",
-  "description": "Cloud Storage Vault Application",
+  "description": "Cloud Storage Vault - Secure file storage with 3D interface",
+  "main": "3d-vault.html",
   "scripts": {
+    "start": "serve",
+    "build": "echo 'No build step required'",
     "dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
     "preview": "cd frontend && npm run preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soham999a/cloud-storage-vault.git"
+  },
+  "keywords": [
+    "cloud",
+    "storage",
+    "vault",
+    "firebase",
+    "3d",
+    "file-storage"
+  ],
+  "author": "Soham Das",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/soham999a/cloud-storage-vault/issues"
+  },
+  "homepage": "https://github.com/soham999a/cloud-storage-vault#readme",
+  "dependencies": {
+    "serve": "^14.2.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.4",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
     "postcss-import": "^16.1.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
