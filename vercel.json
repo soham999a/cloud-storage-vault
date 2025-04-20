@@ -1,5 +1,15 @@
 {
   "framework": null,
   "outputDirectory": ".",
-  "buildCommand": "echo 'No build step needed'"
+  "buildCommand": "echo 'No build step needed'",
+  "env": {
+    "FIREBASE_API_KEY": "AIzaSyDQnxJpj0rlnKSeAKV5Qxj8YnxvTNmGQyY",
+    "FIREBASE_AUTH_DOMAIN": "cloud-storage-vault-c9e0c.firebaseapp.com",
+    "FIREBASE_PROJECT_ID": "cloud-storage-vault-c9e0c",
+    "FIREBASE_STORAGE_BUCKET": "cloud-storage-vault-c9e0c.appspot.com",
+    "FIREBASE_MESSAGING_SENDER_ID": "1098024457778",
+    "FIREBASE_APP_ID": "1:1098024457778:web:0a5e5a2e0b4e3f3f3f3f3f",
+    "SUPABASE_URL": "https://rpznczfcbshqukwiipvy.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwem5jemZjYnNocXVrd2lpcHZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTk0NTQ4MDcsImV4cCI6MjAxNTAzMDgwN30.Nh83ebqzf1iGHTaGzXhq7gQKyNIBqQQkYTZEb_lTrXQ"
+  }
 }
