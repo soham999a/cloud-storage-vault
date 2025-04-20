@@ -439,16 +439,8 @@ function updateDashboardStats(files) {
             }
         }
 
-        // Update storage display - try different selectors
-        let storageDisplay = document.querySelector('.dashboard-container .storage-card h3');
-        if (!storageDisplay) {
-            // Try alternative selector
-            const storageCards = document.querySelectorAll('.dashboard-container .stat-card h3');
-            if (storageCards.length > 0) {
-                storageDisplay = storageCards[0]; // First card is usually storage
-            }
-        }
-
+        // Update storage display - use the correct selector for the stat-value class
+        const storageDisplay = document.querySelector('.dashboard-container .stat-card:nth-child(1) .stat-value');
         if (storageDisplay) {
             storageDisplay.textContent = storageText;
             console.log('Updated storage display to:', storageText);
@@ -456,16 +448,8 @@ function updateDashboardStats(files) {
             console.warn('Storage display element not found');
         }
 
-        // Update file count - try different selectors
-        let fileCountDisplay = document.querySelector('.dashboard-container .files-card h3');
-        if (!fileCountDisplay) {
-            // Try alternative selector
-            const statCards = document.querySelectorAll('.dashboard-container .stat-card h3');
-            if (statCards.length > 1) {
-                fileCountDisplay = statCards[1]; // Second card is usually files count
-            }
-        }
-
+        // Update file count - use the correct selector for the stat-value class
+        const fileCountDisplay = document.querySelector('.dashboard-container .stat-card:nth-child(2) .stat-value');
         if (fileCountDisplay) {
             fileCountDisplay.textContent = files.length.toString();
             console.log('Updated file count display to:', files.length);

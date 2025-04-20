@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #4285F4;
+            border-bottom: 2px solid #4285F4;
+            padding-bottom: 10px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #3367D6;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .success {
+            color: #0F9D58;
+            font-weight: bold;
+        }
+        .error {
+            color: #DB4437;
+            font-weight: bold;
+        }
+        .info {
+            color: #4285F4;
+        }
+        #user-info {
+            display: none;
+        }
+        .user-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user-details {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google Authentication Test</h1>
+    
+    <div class="card">
+        <h2>Firebase Configuration</h2>
+        <p>This page tests Google authentication with Firebase.</p>
+        <div id="firebase-config-info">Loading Firebase configuration...</div>
+    </div>
+    
+    <div class="card">
+        <h2>Authentication Test</h2>
+        <p>Click the button below to test Google sign-in:</p>
+        <button id="google-signin-btn">Sign in with Google</button>
+        <button id="signout-btn" style="display:none;">Sign Out</button>
+        
+        <div id="auth-status" style="margin-top: 20px;">
+            <p>Status: <span id="status-message">Not signed in</span></p>
+        </div>
+        
+        <div id="user-info">
+            <h3>User Information</h3>
+            <div class="user-details">
+                <img id="user-photo" class="user-photo" src="" alt="User photo">
+                <div>
+                    <p><strong>Name:</strong> <span id="user-name"></span></p>
+                    <p><strong>Email:</strong> <span id="user-email"></span></p>
+                    <p><strong>UID:</strong> <span id="user-uid"></span></p>
+                </div>
+            </div>
+            <h3>Auth Provider Data</h3>
+            <pre id="provider-data"></pre>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Console Output</h2>
+        <p>Check your browser console (F12) for detailed logs.</p>
+        <button id="run-checks-btn">Run Auth Checks</button>
+        <div id="console-output" style="margin-top: 20px;">
+            <pre id="log-output"></pre>
+        </div>
+    </div>
+
+    <!-- Firebase SDK v9 with CDN (modular) -->
+    <script type="module" src="firebase-config.js"></script>
+    
+    <!-- Firebase Auth Checker -->
+    <script src="firebase-auth-checker.js"></script>
+    
+    <script>
+        // Wait for Firebase to initialize
+        let checkInterval = setInterval(() => {
+            if (window.firebaseServices && window.firebaseConfig) {
+                clearInterval(checkInterval);
+                initApp();
+            }
+        }, 1000);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            document.getElementById('status-message').innerHTML = 
+                '<span class="error">Firebase initialization timed out. Check console for errors.</span>';
+        }, 10000);
+        
+        function initApp() {
+            // Display Firebase config info
+            const configInfo = document.getElementById('firebase-config-info');
+            configInfo.innerHTML = `
+                <p><strong>Auth Domain:</strong> ${window.firebaseConfig.authDomain}</p>
+                <p><strong>Project ID:</strong> ${window.firebaseConfig.projectId}</p>
+                <p><strong>Current Origin:</strong> ${window.location.origin}</p>
+            `;
+            
+            // Set up auth state listener
+            window.firebaseServices.onAuthStateChanged((user) => {
+                const statusMessage = document.getElementById('status-message');
+                const userInfo = document.getElementById('user-info');
+                const signInBtn = document.getElementById('google-signin-btn');
+                const signOutBtn = document.getElementById('signout-btn');
+                
+                if (user) {
+                    // User is signed in
+                    statusMessage.innerHTML = `<span class="success">Signed in as ${user.email}</span>`;
+                    userInfo.style.display = 'block';
+                    signInBtn.style.display = 'none';
+                    signOutBtn.style.display = 'inline-block';
+                    
+                    // Display user info
+                    document.getElementById('user-name').textContent = user.displayName || 'N/A';
+                    document.getElementById('user-email').textContent = user.email || 'N/A';
+                    document.getElementById('user-uid').textContent = user.uid;
+                    document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/50';
+                    
+                    // Display provider data
+                    const providerData = JSON.stringify(user.providerData, null, 2);
+                    document.getElementById('provider-data').textContent = providerData;
+                    
+                    // Log success
+                    console.log('User signed in:', user);
+                    addToLog('✅ Successfully signed in with Google');
+                } else {
+                    // User is signed out
+                    statusMessage.innerHTML = '<span class="info">Not signed in</span>';
+                    userInfo.style.display = 'none';
+                    signInBtn.style.display = 'inline-block';
+                    signOutBtn.style.display = 'none';
+                    
+                    console.log('User signed out');
+                }
+            });
+            
+            // Set up sign-in button
+            document.getElementById('google-signin-btn').addEventListener('click', () => {
+                const statusMessage = document.getElementById('status-message');
+                statusMessage.innerHTML = '<span class="info">Signing in...</span>';
+                
+                addToLog('🔑 Attempting Google sign-in...');
+                
+                window.firebaseServices.signInWithGoogle()
+                    .catch((error) => {
+                        console.error('Google sign-in error:', error);
+                        statusMessage.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+                        addToLog(`❌ Sign-in error: ${error.code} - ${error.message}`);
+                    });
+            });
+            
+            // Set up sign-out button
+            document.getElementById('signout-btn').addEventListener('click', () => {
+                window.firebaseServices.signOut()
+                    .then(() => {
+                        addToLog('🚪 Signed out successfully');
+                    })
+                    .catch((error) => {
+                        console.error('Sign out error:', error);
+                        addToLog(`❌ Sign-out error: ${error.message}`);
+                    });
+            });
+            
+            // Set up run checks button
+            document.getElementById('run-checks-btn').addEventListener('click', () => {
+                addToLog('🔍 Running Firebase auth checks...');
+                if (typeof window.checkFirebaseAuth === 'function') {
+                    window.checkFirebaseAuth();
+                    addToLog('✅ Auth checks completed. See console for details.');
+                } else {
+                    addToLog('❌ Auth checker not available. Make sure firebase-auth-checker.js is loaded.');
+                }
+            });
+            
+            // Initial auth checks
+            setTimeout(() => {
+                if (typeof window.checkFirebaseAuth === 'function') {
+                    window.checkFirebaseAuth();
+                }
+            }, 2000);
+        }
+        
+        // Helper to add logs to the page
+        function addToLog(message) {
+            const logOutput = document.getElementById('log-output');
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.textContent += `[${timestamp}] ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+    </script>
+</body>
+</html>

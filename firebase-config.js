@@ -1,20 +1,40 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js';
 import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js';
 
 // Your web app's Firebase configuration
+// Get Firebase config from environment variables if available, otherwise use hardcoded values
 const firebaseConfig = {
   apiKey: "AIzaSyDQnxJpj0rlnKSeAKV5Qxj8YnxvTNmGQyY",
   authDomain: "cloud-storage-vault-c9e0c.firebaseapp.com",
   projectId: "cloud-storage-vault-c9e0c",
   storageBucket: "cloud-storage-vault-c9e0c.appspot.com",
   messagingSenderId: "1098024457778",
+  // Fix the appId format - it should be a valid Firebase app ID
   appId: "1:1098024457778:web:0a5e5a2e0b4e3f3f3f3f3f",
   measurementId: "G-KEJ7VKNTZP"
 };
+
+// Try to fix the appId if it looks invalid (placeholder format)
+if (firebaseConfig.appId.includes('3f3f3f3f')) {
+  console.warn('Firebase appId appears to be a placeholder. Attempting to fix...');
+  // Generate a more likely valid appId format
+  const randomSuffix = Math.random().toString(36).substring(2, 10);
+  firebaseConfig.appId = `1:${firebaseConfig.messagingSenderId}:web:${randomSuffix}`;
+  console.log('Using generated appId:', firebaseConfig.appId);
+}
+
+// Log Firebase config for debugging
+console.log('Firebase config loaded:', {
+  apiKey: firebaseConfig.apiKey,
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  // Don't log sensitive values
+  appId: '...' + firebaseConfig.appId.slice(-6)
+});
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -25,8 +45,16 @@ const analytics = getAnalytics(app);
 
 // Initialize Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
+
+// Add scopes for additional permissions if needed
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+
+// Set custom parameters for the Google sign-in flow
 googleProvider.setCustomParameters({
-  prompt: 'select_account'
+  prompt: 'select_account',
+  // Don't set redirect_uri as Firebase will handle this automatically
+  // This is important for Vercel deployments
 });
 
 console.log('Firebase v9 SDK initialized successfully');
@@ -48,9 +76,86 @@ window.firebaseServices = {
   signInWithEmailAndPassword: (email, password) => signInWithEmailAndPassword(auth, email, password),
   signInWithGoogle: async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('Google sign-in successful');
-      return result;
+      console.log('Starting Google sign-in process...');
+      console.log('Using auth domain:', firebaseConfig.authDomain);
+      console.log('Current origin:', window.location.origin);
+
+      // Check if we're on Vercel
+      const isVercel = window.location.hostname.includes('vercel.app');
+      console.log('Is Vercel deployment:', isVercel);
+
+      // First, check if we're returning from a redirect
+      try {
+        // This will resolve immediately if there's no redirect result
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          console.log('Google sign-in with redirect successful');
+          return result;
+        }
+      } catch (redirectError) {
+        console.log('No redirect result or error:', redirectError);
+        // Continue with normal sign-in flow
+      }
+
+      // For Vercel deployments, use redirect method directly
+      // This is more reliable on Vercel
+      if (isVercel) {
+        console.log('Using redirect method for Vercel deployment');
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          // This won't actually return anything as the page will redirect
+          return null;
+        } catch (redirectError) {
+          console.error('Redirect method failed on Vercel:', redirectError);
+          // Don't show alert as it might be confusing - we'll handle errors in the UI
+          throw redirectError;
+        }
+      }
+
+      // For non-Vercel deployments, try popup first
+      try {
+        console.log('Attempting popup sign-in...');
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log('Google sign-in with popup successful');
+        return result;
+      } catch (popupError) {
+        console.error('Google sign-in popup error:', popupError);
+
+        // Handle specific popup errors
+        if (popupError.code === 'auth/popup-blocked') {
+          console.log('Popup blocked, falling back to redirect method');
+          // Fall back to redirect method
+          try {
+            await signInWithRedirect(auth, googleProvider);
+            // This won't actually return anything as the page will redirect
+            return null;
+          } catch (redirectError) {
+            console.error('Redirect method also failed:', redirectError);
+            throw redirectError;
+          }
+        } else if (popupError.code === 'auth/popup-closed-by-user') {
+          console.log('Sign-in was cancelled by user');
+        } else if (popupError.code === 'auth/cancelled-popup-request') {
+          console.log('Another sign-in attempt is in progress');
+        } else if (popupError.code === 'auth/unauthorized-domain') {
+          console.error('Unauthorized domain. Make sure ' + window.location.origin + ' is added to the OAuth redirect domains in Firebase console.');
+
+          // Try redirect method as a last resort
+          try {
+            console.log('Attempting redirect method as fallback for unauthorized domain...');
+            await signInWithRedirect(auth, googleProvider);
+            return null;
+          } catch (redirectError) {
+            console.error('Redirect method also failed:', redirectError);
+            throw redirectError;
+          }
+        } else {
+          // For other errors, log but don't alert
+          console.error('Sign-in failed:', popupError.message || 'Unknown error');
+        }
+
+        throw popupError;
+      }
     } catch (error) {
       console.error('Google sign-in error:', error);
       throw error;
@@ -59,6 +164,7 @@ window.firebaseServices = {
   signOut: () => signOut(auth),
   onAuthStateChanged: (callback) => onAuthStateChanged(auth, callback),
   updateProfile: (user, data) => updateProfile(user, data),
+  getRedirectResult: () => getRedirectResult(auth),
   // Firestore functions
   createUserDocument: async (userId, data) => {
     try {

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sign-In Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #4285F4;
+            border-bottom: 2px solid #4285F4;
+            padding-bottom: 10px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #3367D6;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .success {
+            color: #0F9D58;
+            font-weight: bold;
+        }
+        .error {
+            color: #DB4437;
+            font-weight: bold;
+        }
+        .info {
+            color: #4285F4;
+        }
+        #user-info {
+            display: none;
+        }
+        .user-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user-details {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            color: #757575;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .google-btn img {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+        }
+        .google-btn:hover {
+            background-color: #f8f8f8;
+        }
+        #log-output {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google Sign-In Test</h1>
+    
+    <div class="card">
+        <h2>Simple Google Sign-In Test</h2>
+        <p>This page tests Google authentication with Firebase using both popup and redirect methods.</p>
+        <p>Current URL: <span id="current-url"></span></p>
+        <p>Auth Domain: <span id="auth-domain">Loading...</span></p>
+    </div>
+    
+    <div class="card">
+        <h2>Sign-In Methods</h2>
+        <p>Try different sign-in methods:</p>
+        
+        <button id="popup-signin-btn" class="google-btn">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+            Sign in with Popup
+        </button>
+        
+        <button id="redirect-signin-btn" class="google-btn">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+            Sign in with Redirect
+        </button>
+        
+        <button id="signout-btn" style="display:none;">Sign Out</button>
+        
+        <div id="auth-status" style="margin-top: 20px;">
+            <p>Status: <span id="status-message">Not signed in</span></p>
+        </div>
+        
+        <div id="user-info">
+            <h3>User Information</h3>
+            <div class="user-details">
+                <img id="user-photo" class="user-photo" src="" alt="User photo">
+                <div>
+                    <p><strong>Name:</strong> <span id="user-name"></span></p>
+                    <p><strong>Email:</strong> <span id="user-email"></span></p>
+                    <p><strong>UID:</strong> <span id="user-uid"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Console Output</h2>
+        <p>Check your browser console (F12) for detailed logs.</p>
+        <button id="clear-logs-btn">Clear Logs</button>
+        <div id="console-output" style="margin-top: 20px;">
+            <pre id="log-output"></pre>
+        </div>
+    </div>
+
+    <!-- Firebase SDK v9 with CDN (modular) -->
+    <script type="module" src="firebase-config.js"></script>
+    
+    <script>
+        // Display current URL
+        document.getElementById('current-url').textContent = window.location.href;
+        
+        // Wait for Firebase to initialize
+        let checkInterval = setInterval(() => {
+            if (window.firebaseServices && window.firebaseConfig) {
+                clearInterval(checkInterval);
+                initApp();
+            }
+        }, 1000);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            document.getElementById('status-message').innerHTML = 
+                '<span class="error">Firebase initialization timed out. Check console for errors.</span>';
+            addToLog('❌ Firebase initialization timed out');
+        }, 10000);
+        
+        function initApp() {
+            // Display Firebase auth domain
+            document.getElementById('auth-domain').textContent = window.firebaseConfig.authDomain;
+            
+            addToLog('✅ Firebase initialized');
+            addToLog(`📌 Auth Domain: ${window.firebaseConfig.authDomain}`);
+            addToLog(`📌 Current Origin: ${window.location.origin}`);
+            
+            // Check for redirect result
+            checkRedirectResult();
+            
+            // Set up auth state listener
+            window.firebaseServices.onAuthStateChanged((user) => {
+                const statusMessage = document.getElementById('status-message');
+                const userInfo = document.getElementById('user-info');
+                const signInBtns = document.querySelectorAll('.google-btn');
+                const signOutBtn = document.getElementById('signout-btn');
+                
+                if (user) {
+                    // User is signed in
+                    statusMessage.innerHTML = `<span class="success">Signed in as ${user.email}</span>`;
+                    userInfo.style.display = 'block';
+                    signInBtns.forEach(btn => btn.style.display = 'none');
+                    signOutBtn.style.display = 'inline-block';
+                    
+                    // Display user info
+                    document.getElementById('user-name').textContent = user.displayName || 'N/A';
+                    document.getElementById('user-email').textContent = user.email || 'N/A';
+                    document.getElementById('user-uid').textContent = user.uid;
+                    document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/50';
+                    
+                    addToLog(`✅ User signed in: ${user.email}`);
+                } else {
+                    // User is signed out
+                    statusMessage.innerHTML = '<span class="info">Not signed in</span>';
+                    userInfo.style.display = 'none';
+                    signInBtns.forEach(btn => btn.style.display = 'inline-block');
+                    signOutBtn.style.display = 'none';
+                    
+                    addToLog('📌 User signed out');
+                }
+            });
+            
+            // Set up popup sign-in button
+            document.getElementById('popup-signin-btn').addEventListener('click', () => {
+                const statusMessage = document.getElementById('status-message');
+                statusMessage.innerHTML = '<span class="info">Signing in with popup...</span>';
+                
+                addToLog('🔑 Attempting Google sign-in with popup...');
+                
+                window.firebaseServices.signInWithGoogle()
+                    .catch((error) => {
+                        console.error('Google sign-in error:', error);
+                        statusMessage.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+                        addToLog(`❌ Sign-in error: ${error.code} - ${error.message}`);
+                    });
+            });
+            
+            // Set up redirect sign-in button
+            document.getElementById('redirect-signin-btn').addEventListener('click', () => {
+                const statusMessage = document.getElementById('status-message');
+                statusMessage.innerHTML = '<span class="info">Redirecting to Google sign-in...</span>';
+                
+                addToLog('🔄 Redirecting to Google sign-in...');
+                
+                // Import the redirect function directly to avoid issues
+                import('https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js')
+                    .then((firebaseAuth) => {
+                        const provider = new firebaseAuth.GoogleAuthProvider();
+                        provider.addScope('profile');
+                        provider.addScope('email');
+                        
+                        firebaseAuth.signInWithRedirect(window.firebaseServices.auth, provider)
+                            .catch((error) => {
+                                console.error('Redirect error:', error);
+                                statusMessage.innerHTML = `<span class="error">Redirect error: ${error.message}</span>`;
+                                addToLog(`❌ Redirect error: ${error.code} - ${error.message}`);
+                            });
+                    })
+                    .catch((error) => {
+                        console.error('Import error:', error);
+                        statusMessage.innerHTML = `<span class="error">Import error: ${error.message}</span>`;
+                        addToLog(`❌ Import error: ${error.message}`);
+                    });
+            });
+            
+            // Set up sign-out button
+            document.getElementById('signout-btn').addEventListener('click', () => {
+                window.firebaseServices.signOut()
+                    .then(() => {
+                        addToLog('🚪 Signed out successfully');
+                    })
+                    .catch((error) => {
+                        console.error('Sign out error:', error);
+                        addToLog(`❌ Sign-out error: ${error.message}`);
+                    });
+            });
+            
+            // Set up clear logs button
+            document.getElementById('clear-logs-btn').addEventListener('click', () => {
+                document.getElementById('log-output').textContent = '';
+                addToLog('🧹 Logs cleared');
+            });
+        }
+        
+        // Check for redirect result
+        function checkRedirectResult() {
+            addToLog('🔍 Checking for redirect result...');
+            
+            if (typeof window.firebaseServices.getRedirectResult === 'function') {
+                window.firebaseServices.getRedirectResult()
+                    .then((result) => {
+                        if (result && result.user) {
+                            addToLog(`✅ Successfully signed in after redirect: ${result.user.email}`);
+                        } else {
+                            addToLog('📌 No redirect result found');
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error getting redirect result:', error);
+                        addToLog(`❌ Redirect result error: ${error.code} - ${error.message}`);
+                    });
+            } else {
+                addToLog('⚠️ getRedirectResult function not available');
+                
+                // Try to import and use directly
+                import('https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js')
+                    .then((firebaseAuth) => {
+                        firebaseAuth.getRedirectResult(window.firebaseServices.auth)
+                            .then((result) => {
+                                if (result && result.user) {
+                                    addToLog(`✅ Successfully signed in after redirect: ${result.user.email}`);
+                                } else {
+                                    addToLog('📌 No redirect result found (direct import)');
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('Error getting redirect result (direct import):', error);
+                                addToLog(`❌ Redirect result error (direct import): ${error.code} - ${error.message}`);
+                            });
+                    })
+                    .catch((error) => {
+                        console.error('Import error:', error);
+                        addToLog(`❌ Import error: ${error.message}`);
+                    });
+            }
+        }
+        
+        // Helper to add logs to the page
+        function addToLog(message) {
+            const logOutput = document.getElementById('log-output');
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.textContent += `[${timestamp}] ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+    </script>
+</body>
+</html>

@@ -47,6 +47,9 @@ class DirectFileManager {
 
         // Update UI immediately
         this.updateUI();
+
+        // Update dashboard stats
+        this.updateDashboardStats();
     }
 
     /**
@@ -84,6 +87,9 @@ class DirectFileManager {
             // Update UI
             this.updateUI();
 
+            // Update dashboard stats
+            this.updateDashboardStats();
+
             return true;
         }
 
@@ -119,6 +125,167 @@ class DirectFileManager {
         console.log('Found files container:', filesContainer);
 
         // Check if we have files to display
+        if (userFiles.length === 0) {
+            // No files to display
+            filesContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📤</div>
+                    <p>You haven't uploaded any files yet.</p>
+                    <p class="empty-hint">Free users: 5MB maximum file size</p>
+                    <button class="upload-first-btn">Upload Your First File (5MB max)</button>
+                </div>
+            `;
+
+            // Add event listener to upload button
+            const uploadBtn = filesContainer.querySelector('.upload-first-btn');
+            if (uploadBtn) {
+                uploadBtn.addEventListener('click', window.handleFileUpload);
+            }
+
+            return;
+        }
+
+        // We have files to display
+        // Get current view mode
+        const viewMode = localStorage.getItem('viewMode') || 'grid';
+
+        // Create HTML for files
+        let filesHTML = '';
+
+        if (viewMode === 'grid') {
+            // Grid view
+            filesHTML = '<div class="files-grid">';
+
+            userFiles.forEach(file => {
+                const fileIcon = window.getFileIcon(file.type, file.name);
+                const fileDate = window.formatDate(new Date(file.createdAt));
+                const localBadge = file.isLocal ? '<span class="local-badge">Local</span>' : '';
+
+                filesHTML += `
+                    <div class="file-card ${file.isLocal ? 'local-file' : ''}" data-id="${file.id}" data-url="${file.url}" data-type="${file.type}" data-name="${file.name}" data-is-local="${file.isLocal ? 'true' : 'false'}">
+                        <div class="file-thumbnail ${fileIcon.class}">${fileIcon.icon}</div>
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-info">${window.formatFileSize(file.size)} • ${fileDate} ${localBadge}</div>
+                    </div>
+                `;
+            });
+
+            filesHTML += '</div>';
+        } else {
+            // List view
+            userFiles.forEach(file => {
+                const fileIcon = window.getFileIcon(file.type, file.name);
+                const fileDate = window.formatDate(new Date(file.createdAt));
+                const localBadge = file.isLocal ? '<span class="local-badge">Local</span>' : '';
+
+                filesHTML += `
+                    <div class="file-item ${file.isLocal ? 'local-file' : ''}" data-id="${file.id}" data-url="${file.url}" data-type="${file.type}" data-name="${file.name}" data-is-local="${file.isLocal ? 'true' : 'false'}">
+                        <div class="file-icon ${fileIcon.class}">${fileIcon.icon}</div>
+                        <div class="file-details">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-meta">${window.formatFileSize(file.size)} • ${fileDate} ${localBadge}</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="file-action-btn download-btn" title="Download">⬇️</button>
+                            <button class="file-action-btn share-btn" title="Share">🔗</button>
+                            <button class="file-action-btn delete-btn" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Update container
+        filesContainer.innerHTML = filesHTML;
+
+        // Add event listeners
+        if (viewMode === 'grid') {
+            // Add event listeners to file cards
+            document.querySelectorAll('.file-card').forEach(card => {
+                card.addEventListener('click', window.handleFilePreview);
+            });
+        } else {
+            // Add event listeners to file items
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // Only trigger preview if not clicking on an action button
+                    if (!e.target.closest('.file-action-btn')) {
+                        window.handleFilePreview.call(this, e);
+                    }
+                });
+            });
+
+            // Add event listeners to file action buttons
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', window.handleFileDownload);
+            });
+
+            document.querySelectorAll('.share-btn').forEach(btn => {
+                btn.addEventListener('click', window.handleFileShare);
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', window.handleFileDelete);
+            });
+        }
+    }
+
+    /**
+     * Update dashboard stats with file count and storage usage
+     */
+    updateDashboardStats() {
+        try {
+            // Get current user
+            const user = window.firebaseServices?.auth?.currentUser;
+            if (!user) {
+                console.warn('Cannot update dashboard stats: No user logged in');
+                return;
+            }
+
+            // Get files for current user
+            const userFiles = this.getUserFiles(user.uid);
+
+            // Calculate total storage used
+            let totalBytes = 0;
+            userFiles.forEach(file => {
+                totalBytes += file.size || 0;
+            });
+
+            // Format storage size
+            let storageText = '0 GB';
+            if (totalBytes > 0) {
+                if (totalBytes < 1024 * 1024) {
+                    storageText = (totalBytes / 1024).toFixed(2) + ' KB';
+                } else if (totalBytes < 1024 * 1024 * 1024) {
+                    storageText = (totalBytes / (1024 * 1024)).toFixed(2) + ' MB';
+                } else {
+                    storageText = (totalBytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+                }
+            }
+
+            // Update storage display
+            const storageDisplay = document.querySelector('.dashboard-container .stat-card:nth-child(1) .stat-value');
+            if (storageDisplay) {
+                storageDisplay.textContent = storageText;
+                console.log('Updated storage display to:', storageText);
+            } else {
+                console.warn('Storage display element not found');
+            }
+
+            // Update file count
+            const fileCountDisplay = document.querySelector('.dashboard-container .stat-card:nth-child(2) .stat-value');
+            if (fileCountDisplay) {
+                fileCountDisplay.textContent = userFiles.length.toString();
+                console.log('Updated file count display to:', userFiles.length);
+            } else {
+                console.warn('File count display element not found');
+            }
+
+            console.log(`Updated dashboard stats: ${userFiles.length} files, ${storageText} used`);
+        } catch (error) {
+            console.error('Error updating dashboard stats:', error);
+        }
+    }
         if (userFiles.length === 0) {
             // No files to display
             filesContainer.innerHTML = `
